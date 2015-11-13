@@ -40,7 +40,7 @@ function islandora_identifier_lookup_menu() {
  */
 function islandora_identifier_lookup_admin_settings() {
   $form['islandora_identifier_lookup_path_to_uuidgen'] = array(
-    '#title' => t('UUID XPath expression'),
+    '#title' => t('Path to uuidgen'),
     '#type' => 'textfield',
     '#size' => 60,
     '#default_value' => variable_get('islandora_identifier_lookup_path_to_uuidgen', '/usr/bin/uuidgen'),
