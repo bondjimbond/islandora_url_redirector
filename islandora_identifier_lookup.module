@@ -5,6 +5,14 @@
  */
 function islandora_identifier_lookup_menu() {
   $items = array();
+  $items['admin/islandora/tools/idlookup'] = array(
+    'title' => 'Islandora Identifier Lookup',
+    'description' => 'Configure Islandora Identifier Lookup.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_identifier_lookup_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
   $items['islandora/idlookup/uuid/%'] = array(
     'access callback' => TRUE,
     'page callback' => 'islandora_identifier_lookup_lookup_id',
@@ -22,28 +30,80 @@ function islandora_identifier_lookup_menu() {
   return $items;
 }
 
+/**
+ * Admin settings form builder.
+ */
+function islandora_identifier_lookup_admin_settings() {
+  $form['islandora_identifier_lookup_uuid_xpath'] = array(
+    '#title' => t('UUID XPath expression'),
+    '#type' => 'textfield',
+    '#size' => 60,
+    '#default_value' => variable_get('islandora_identifier_lookup_uuid_xpath', '//mods:mods[1]/mods:identifier[@type="uuid"]'),
+    '#description' => t('XPath expression to retrieve the UUID from the MODS datastream'),
+    '#maxlength' => 255,
+  );
+  $form['islandora_identifier_lookup_pid_solr_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('UUID Solr field'),
+    '#size' => 60,
+    '#default_value' => variable_get('islandora_identifier_lookup_pid_solr_field', 'mods_identifier_uuid_s'),
+    '#description' => t('Solr fieldname to use in queries to get PID corresponding to UUID.'),
+    '#maxlength' => 255,
+  );
+  $form['islandora_identifier_lookup_add_uuids'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add identifier elements containing UUIDs to new objects'),
+    '#default_value' => variable_get('islandora_identifier_lookup_add_uuids', 1),
+    '#description' => t("Check this option if you want to add an &lt;idenfitier&gt;
+      element (type='uuid') containing a UUID to each new object's MODS datastream."),
+  );
+
+  return system_settings_form($form);
+}
+
 function islandora_identifier_lookup_lookup_id($uuid) {
-  $pid = islandora_identifier_lookup_get_pid($uuid);
+  // Validate the UUID.
+  if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', trim($uuid))) {
+    $pid = islandora_identifier_lookup_get_pid($uuid);
+  }
+  else {
+    return FALSE;
+  }
   return trim($pid);
 }
 
 function islandora_identifier_lookup_lookup_pid($pid) {
-  $object = islandora_object_load($pid);
-  $mods_content = $object['MODS']->content;
+  // Validate PID. Cribbed from islandora/includes/utilities.inc (which we don't
+  // load here since it is almost 1000 lines long.)
+  if (!(drupal_strlen(trim($pid)) <= 64 && preg_match('/^([A-Za-z0-9]|-|\.)+:(([A-Za-z0-9])|-|\.|~|_|(%[0-9A-F]{2}))+$/', trim($pid)))) {
+    return FALSE;
+  }
+  if (!$object = islandora_object_load($pid)) {
+    return FALSE;
+  }
+  if (!isset($object['MODS'])) {
+    return FALSE;
+  }
 
+  $mods_content = $object['MODS']->content;
   $dom = new DOMDocument();
   $dom->loadXML($mods_content);
   $xpath = new DOMXpath($dom);
   $xpath->registerNamespace('mods', 'http://www.loc.gov/mods/v3');
-  $xpath_expression = '//mods:mods[1]/mods:identifier[@type="uuid"]';
+  $xpath_expression = variable_get('islandora_identifier_lookup_uuid_xpath', '//mods:mods[1]/mods:identifier[@type="uuid"]');
   $uuids = $xpath->query($xpath_expression);
   return trim($uuids->item(0)->nodeValue);
 }
 
 function islandora_identifier_lookup_deliver_id($output) {
-  drupal_add_http_header('Content-type', 'text/plain');
-  drupal_add_http_header('Content-length', strlen($output));
-  print $output;
+  if (!$output) {
+    drupal_add_http_header('Status', '404 Not Found');
+  }
+  else {
+    drupal_add_http_header('Content-type', 'text/plain');
+    drupal_add_http_header('Content-length', strlen($output));
+    print $output;
+  }
   drupal_page_footer();
 }
 
@@ -53,10 +113,9 @@ function islandora_identifier_lookup_deliver_id($output) {
  * Adds an <identifier type="uuid"> element to all new MODS datastreams.
  */
 function islandora_identifier_lookup_islandora_datastream_alter(AbstractObject &$object, AbstractDatastream &$datastream, &$context) {
-  if ($context['action'] == 'ingest') {
+  if (variable_get('islandora_identifier_lookup_add_uuids', 1) && $context['action'] == 'ingest') {
     // Assumes MODS.
     if ($datastream->id == 'MODS') {
-
       $dom = new DOMDocument;
       $dom->loadXML($datastream->content);
 
@@ -93,7 +152,7 @@ function islandora_identifier_lookup_islandora_datastream_alter(AbstractObject &
  */
 function islandora_identifier_lookup_get_pid($uuid) {
   $solr_url = variable_get('islandora_solr_url', 'http://localhost:8080/solr');
-  $target_element = 'mods_identifier_uuid_s';
+  $target_element = variable_get('islandora_identifier_lookup_pid_solr_field', 'mods_identifier_uuid_s');
   $pid_query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
     $target_element . ':' . '%22' . $uuid . '%22&fl=PID';
   $raw_result = drupal_http_request($pid_query);
