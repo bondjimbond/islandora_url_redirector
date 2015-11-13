@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * The main islandora_identifier_lookup module file.
+ */
+
+/**
  * Implements hook_menu().
  */
 function islandora_identifier_lookup_menu() {
@@ -61,6 +66,15 @@ function islandora_identifier_lookup_admin_settings() {
   return system_settings_form($form);
 }
 
+/**
+ * Given a UUID, returns the PID of the corresponding object.
+ *
+ * @param string $uuid
+ *   A UUID.
+ *
+ * @return string|bool
+ *   The object's PID or if the object doesn't exsit, FALSE.
+ */
 function islandora_identifier_lookup_lookup_id($uuid) {
   // Validate the UUID.
   if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', trim($uuid))) {
@@ -72,6 +86,15 @@ function islandora_identifier_lookup_lookup_id($uuid) {
   return trim($pid);
 }
 
+/**
+ * Given a PID, returns the UUID of the corresponding object.
+ *
+ * @param string $pid
+ *   A PID.
+ *
+ * @return string|bool
+ *   The object's UUID or if one can't be found, FALSE.
+ */
 function islandora_identifier_lookup_lookup_pid($pid) {
   // Validate PID. Cribbed from islandora/includes/utilities.inc (which we don't
   // load here since it is almost 1000 lines long.)
@@ -95,6 +118,9 @@ function islandora_identifier_lookup_lookup_pid($pid) {
   return trim($uuids->item(0)->nodeValue);
 }
 
+/**
+ * Page delivery callback.
+ */
 function islandora_identifier_lookup_deliver_id($output) {
   if (!$output) {
     drupal_add_http_header('Status', '404 Not Found');
@@ -116,7 +142,7 @@ function islandora_identifier_lookup_islandora_datastream_alter(AbstractObject &
   if (variable_get('islandora_identifier_lookup_add_uuids', 1) && $context['action'] == 'ingest') {
     // Assumes MODS.
     if ($datastream->id == 'MODS') {
-      $dom = new DOMDocument;
+      $dom = new DOMDocument();
       $dom->loadXML($datastream->content);
 
       $identifiers = $dom->getElementsByTagName('identifier');
@@ -154,7 +180,7 @@ function islandora_identifier_lookup_get_pid($uuid) {
   $solr_url = variable_get('islandora_solr_url', 'http://localhost:8080/solr');
   $target_element = variable_get('islandora_identifier_lookup_pid_solr_field', 'mods_identifier_uuid_s');
   $pid_query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
-    $target_element . ':' . '%22' . $uuid . '%22&fl=PID';
+    $target_element . ':%22' . $uuid . '%22&fl=PID';
   $raw_result = drupal_http_request($pid_query);
   if ($raw_result->code != 200) {
     return FALSE;
