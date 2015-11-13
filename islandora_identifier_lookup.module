@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_identifier_lookup_menu() {
+  $items = array();
+  $items['islandora/idlookup/uuid/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'islandora_identifier_lookup_lookup_id',
+    'page arguments' => array(3),
+    'delivery callback' => 'islandora_identifier_lookup_deliver_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['islandora/idlookup/pid/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'islandora_identifier_lookup_lookup_pid',
+    'page arguments' => array(3),
+    'delivery callback' => 'islandora_identifier_lookup_deliver_id',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function islandora_identifier_lookup_lookup_id($uuid) {
+  $pid = islandora_identifier_lookup_get_pid($uuid);
+  return trim($pid);
+}
+
+function islandora_identifier_lookup_lookup_pid($pid) {
+  $object = islandora_object_load($pid);
+  $mods_content = $object['MODS']->content;
+
+  $dom = new DOMDocument();
+  $dom->loadXML($mods_content);
+  $xpath = new DOMXpath($dom);
+  $xpath->registerNamespace('mods', 'http://www.loc.gov/mods/v3');
+  $xpath_expression = '//mods:mods[1]/mods:identifier[@type="uuid"]';
+  $uuids = $xpath->query($xpath_expression);
+  return trim($uuids->item(0)->nodeValue);
+}
+
+function islandora_identifier_lookup_deliver_id($output) {
+  drupal_add_http_header('Content-type', 'text/plain');
+  drupal_add_http_header('Content-length', strlen($output));
+  print $output;
+  drupal_page_footer();
+}
+
+/**
+ * Performs a query to Islandora's Solr index to get a PID.
+ *
+ * @param string $uuid
+ *   A UUID.
+ */
+function islandora_identifier_lookup_get_pid($uuid) {
+  $solr_url = variable_get('islandora_solr_url', 'http://localhost:8080/solr');
+  $target_element = 'dc.identifier';
+  $pid_query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' . $target_element . ':' .
+    '%22' . $uuid . '%22';
+  $raw_result = drupal_http_request($pid_query);
+  if ($raw_result->code != 200) {
+    return FALSE;
+  }
+  $query_result = json_decode($raw_result->data);
+  if ($query_result->response->numFound < 1) {
+    return FALSE;
+  }
+  // If more than one object was found, take the PID of the first one.
+  return $query_result->response->docs[0]->PID;
+}
