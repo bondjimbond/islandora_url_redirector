@@ -48,6 +48,44 @@ function islandora_identifier_lookup_deliver_id($output) {
 }
 
 /**
+ * Implements hook_islandora_datastream_alter().
+ *
+ * Adds an <identifier type="uuid"> element to all new MODS datastreams.
+ */
+function islandora_identifier_lookup_islandora_datastream_alter(AbstractObject &$object, AbstractDatastream &$datastream, &$context) {
+  if ($context['action'] == 'ingest') {
+    // Assumes MODS.
+    if ($datastream->id == 'MODS') {
+
+      $dom = new DOMDocument;
+      $dom->loadXML($datastream->content);
+
+      $identifiers = $dom->getElementsByTagName('identifier');
+
+      // Build the <identifier> element we are adding.
+      $type = $dom->createAttribute('type');
+      $type->value = 'uuid';
+      $uuid = `uuidgen`;
+      $uuid_identifier = $dom->createElement('identifier', trim($uuid));
+      $uuid_identifier->appendChild($type);
+
+      // Figure out where to add it. If one ore more <identifier> elements
+      // exist in the document, add the new one before the first existing one.
+      if ($identifiers->length) {
+        $dom->documentElement->insertBefore($uuid_identifier, $identifiers->item(0));
+      }
+      else {
+        // If none exist, append it to the end of the document.
+        $dom->documentElement->appendChild($uuid_identifier);
+      }
+
+      $updated_mods_xml = $dom->saveXML();
+      $datastream->setContentFromString($updated_mods_xml);
+    }
+  }
+}
+
+/**
  * Performs a query to Islandora's Solr index to get a PID.
  *
  * @param string $uuid
@@ -55,9 +93,9 @@ function islandora_identifier_lookup_deliver_id($output) {
  */
 function islandora_identifier_lookup_get_pid($uuid) {
   $solr_url = variable_get('islandora_solr_url', 'http://localhost:8080/solr');
-  $target_element = 'dc.identifier';
-  $pid_query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' . $target_element . ':' .
-    '%22' . $uuid . '%22';
+  $target_element = 'mods_identifier_uuid_s';
+  $pid_query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
+    $target_element . ':' . '%22' . $uuid . '%22&fl=PID';
   $raw_result = drupal_http_request($pid_query);
   if ($raw_result->code != 200) {
     return FALSE;
