@@ -1,6 +1,8 @@
 # Islandora Identifier Lookup
 
-An Islandora module that lets you query get the UUID for an object if you know its PID, and get an object's PID if you know its UUID. Also lets you assign UUIDs to newly ingested objects.
+An Islandora module that lets you get the UUID for an object if you know its PID, and get an object's PID if you know its UUID. Also lets you assign UUIDs to newly ingested objects.
+
+Initially, querying for UUIDs stored in MODS is possible, but other types of identifiers and datastreams may follow if there is interest.
 
 ## Querying for identifiers
 
@@ -13,9 +15,7 @@ If neither the UUID or PID is found, the request returns a 404.
 
 Take as an example an object with PID 'islandora:100' and &lt;identifier type="uuid"&gt;9299d87d-752b-4a24-a2b8-816103418bb2&lt;/identifier&gt; in its MODS  datastream. `curl "http://localhost:8000/islandora/idlookup/pid/islandora:100"` will yield `9299d87d-752b-4a24-a2b8-816103418bb2`, and `curl "http://localhost:8000/islandora/idlookup/uuid/9299d87d-752b-4a24-a2b8-816103418bb2"` will yield `islandora:100`.
 
-Initially, querying for UUIDs stored in MODS is possible, but other types of identifiers and datastreams may follow if there is interest.
-
-## Rationiale
+## Rationale
 
 Islandora lets you create PIDs that contain UUIDs. That's awesome. If you're happy with that, you don't need this module.
 
@@ -27,11 +27,16 @@ The module also provides an option to add an &lt;identifier type="uuid"&gt; elem
 
 The module does not offer the ability to retroactively add UUIDs to existing MODS datastreams. That would be an awesome feature though.
 
+## Requirements
+
+* [Islandora](https://github.com/Islandora/islandora)
+* [Islandora Solr Search](https://github.com/Islandora/islandora_solr_search)
+
 ## Installation
 
 Same as any Drupal module.
 
-## Congfiguration
+## Configuration
 
 Go to admin/islandora/tools/idlookup to configure it.
 
