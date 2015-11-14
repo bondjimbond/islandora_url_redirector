@@ -44,7 +44,7 @@ Go to admin/islandora/tools/idlookup to configure it.
 
 ## Wish list
 
-* Provide options for storing the UUID somewhere othe than in the MODS datastream.
+* Provide options for storing the UUID somewhere other than in the MODS datastream.
 * Provide a tool to add a UUID to existing objects.
 
 ## Maintainer
