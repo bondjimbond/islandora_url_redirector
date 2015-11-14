@@ -145,26 +145,34 @@ function islandora_identifier_lookup_islandora_datastream_alter(AbstractObject &
 
       $identifiers = $dom->getElementsByTagName('identifier');
 
-      // Build the <identifier> element we are adding.
-      $type = $dom->createAttribute('type');
-      $type->value = 'uuid';
-      $path_to_uuidgen = variable_get('islandora_identifier_lookup_path_to_uuidgen', '/usr/bin/uuidgen');
-      $uuid = `$path_to_uuidgen`;
-      $uuid_identifier = $dom->createElement('identifier', trim($uuid));
-      $uuid_identifier->appendChild($type);
+      // See if this MODS document already has an <identifier type="uuid">.
+      $xpath = new DOMXpath($dom);
+      $xpath->registerNamespace('mods', 'http://www.loc.gov/mods/v3');
+      $xpath_expression = variable_get('islandora_identifier_lookup_uuid_xpath', '//mods:mods[1]/mods:identifier[@type="uuid"]');
+      $uuids = $xpath->query($xpath_expression);
 
-      // Figure out where to add it. If one ore more <identifier> elements
-      // exist in the document, add the new one before the first existing one.
-      if ($identifiers->length) {
-        $dom->documentElement->insertBefore($uuid_identifier, $identifiers->item(0));
-      }
-      else {
-        // If none exist, append it to the end of the document.
-        $dom->documentElement->appendChild($uuid_identifier);
-      }
+      if (!$uuids->length) {
+        // Build the <identifier> element we are adding.
+        $type = $dom->createAttribute('type');
+        $type->value = 'uuid';
+        $path_to_uuidgen = variable_get('islandora_identifier_lookup_path_to_uuidgen', '/usr/bin/uuidgen');
+        $uuid = `$path_to_uuidgen`;
+        $uuid_identifier = $dom->createElement('identifier', trim($uuid));
+        $uuid_identifier->appendChild($type);
 
-      $updated_mods_xml = $dom->saveXML();
-      $datastream->setContentFromString($updated_mods_xml);
+        // Figure out where to add it. If one ore more <identifier> elements
+        // exist in the document, add the new one before the first existing one.
+        if ($identifiers->length) {
+          $dom->documentElement->insertBefore($uuid_identifier, $identifiers->item(0));
+        }
+        else {
+          // If none exist, append it to the end of the document.
+          $dom->documentElement->appendChild($uuid_identifier);
+        }
+
+        $updated_mods_xml = $dom->saveXML();
+        $datastream->setContentFromString($updated_mods_xml);
+      }
     }
   }
 }
