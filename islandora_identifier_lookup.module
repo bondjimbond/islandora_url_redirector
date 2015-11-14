@@ -47,14 +47,6 @@ function islandora_identifier_lookup_admin_settings() {
     '#description' => t('Full path to uuidgen or equivalent on your server.'),
     '#maxlength' => 255,
   );
-  $form['islandora_identifier_lookup_uuid_xpath'] = array(
-    '#title' => t('UUID XPath expression'),
-    '#type' => 'textfield',
-    '#size' => 60,
-    '#default_value' => variable_get('islandora_identifier_lookup_uuid_xpath', '//mods:mods[1]/mods:identifier[@type="uuid"]'),
-    '#description' => t('XPath expression to retrieve the UUID from the MODS datastream'),
-    '#maxlength' => 255,
-  );
   $form['islandora_identifier_lookup_pid_solr_field'] = array(
     '#type' => 'textfield',
     '#title' => t('UUID Solr field'),
@@ -86,7 +78,7 @@ function islandora_identifier_lookup_admin_settings() {
 function islandora_identifier_lookup_lookup_id($uuid) {
   // Validate the UUID.
   if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', trim($uuid))) {
-    $pid = islandora_identifier_lookup_get_pid($uuid);
+    $pid = islandora_identifier_lookup_query_solr($uuid, 'UUID');
   }
   else {
     return FALSE;
@@ -116,14 +108,12 @@ function islandora_identifier_lookup_lookup_pid($pid) {
     return FALSE;
   }
 
-  $mods_content = $object['MODS']->content;
-  $dom = new DOMDocument();
-  $dom->loadXML($mods_content);
-  $xpath = new DOMXpath($dom);
-  $xpath->registerNamespace('mods', 'http://www.loc.gov/mods/v3');
-  $xpath_expression = variable_get('islandora_identifier_lookup_uuid_xpath', '//mods:mods[1]/mods:identifier[@type="uuid"]');
-  $uuids = $xpath->query($xpath_expression);
-  return trim($uuids->item(0)->nodeValue);
+  if ($uuid = islandora_identifier_lookup_query_solr($pid, 'PID')) {
+    return trim($uuid);
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
@@ -180,17 +170,38 @@ function islandora_identifier_lookup_islandora_datastream_alter(AbstractObject &
 }
 
 /**
- * Performs a query to Islandora's Solr index to get a PID.
+ * Queries Islandora's Solr index.
  *
- * @param string $uuid
- *   A UUID.
+ * Given a PID, it queries for a UUID, and given a UUID,
+ * it queries for a PID.
+ *
+ * @param string $input
+ *   Either a UUID or a PID.
+ * @param string $type
+ *   What the $input is. Either 'UUID' or 'PID'.
+ *
+ * @return string|bool
+ *   The retrieved PID or UUID, or, if none is found, FALSE.
  */
-function islandora_identifier_lookup_get_pid($uuid) {
+function islandora_identifier_lookup_query_solr($input, $type) {
   $solr_url = variable_get('islandora_solr_url', 'http://localhost:8080/solr');
-  $target_element = variable_get('islandora_identifier_lookup_pid_solr_field', 'mods_identifier_uuid_s');
-  $pid_query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
-    $target_element . ':%22' . $uuid . '%22&fl=PID';
-  $raw_result = drupal_http_request($pid_query);
+  $uuid_element = variable_get('islandora_identifier_lookup_pid_solr_field', 'mods_identifier_uuid_s');
+
+  if ($type == 'UUID') {
+    $target_field = $uuid_element;
+    $return_field = 'PID';
+  }
+  elseif ($type == 'PID') {
+    $target_field = 'PID';
+    $return_field = $uuid_element;
+  }
+  else {
+    return FALSE;
+  }
+
+  $query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
+    $target_field . ':%22' . $input . '%22&fl=' . $return_field;
+  $raw_result = drupal_http_request($query);
   if ($raw_result->code != 200) {
     return FALSE;
   }
@@ -198,6 +209,7 @@ function islandora_identifier_lookup_get_pid($uuid) {
   if ($query_result->response->numFound < 1) {
     return FALSE;
   }
-  // If more than one object was found, take the PID of the first one.
-  return $query_result->response->docs[0]->PID;
+  // The query should only find one object, but if it finds more than one,
+  // take the first one.
+  return $query_result->response->docs[0]->{$return_field};
 }
