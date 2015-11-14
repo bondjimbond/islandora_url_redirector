@@ -23,7 +23,7 @@ But UUID PIDs make for ugly and long URLs. Also, if you have an Islandora reposi
 
 ## Adding UUIDs to new objects
 
-The module also provides an option to add an &lt;identifier type="uuid"&gt; element to the MODS datastream of all new objects on ingest. To do this, the module calls out to the server's `uuidgen` function (the filesystem path to the utility that generates UUIDs is configurable).
+The module also provides an option to add an &lt;identifier type="uuid"&gt; element to the MODS datastream of all new objects on ingest, if one is not already present. To do this, the module calls out to the server's `uuidgen` function (the filesystem path to the utility that generates UUIDs is configurable).
 
 The module does not offer the ability to retroactively add UUIDs to existing MODS datastreams. That would be an awesome feature though.
 
