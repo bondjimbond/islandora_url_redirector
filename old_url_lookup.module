@@ -131,7 +131,9 @@ function old_url_lookup_id() {
 
 function old_url_lookup_query_solr($input) {
   $solr_url = 'http://localhost:8080/solr';
-  $field = "mods_identifier_uri_s";
+//  $field = "mods_identifier_uri_s";
+  
+  $field = "dc.identifier";
   $query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
   $field . ':%22' . $input . '%22';
   $raw_result = drupal_http_request($query);
