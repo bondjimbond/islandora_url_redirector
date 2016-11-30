@@ -1,0 +1,148 @@
+<?php
+
+/**
+ * @file
+ * The main islandora_identifier_lookup module file.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function old_url_lookup_menu() {
+  $items['facultypub/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['at-cura_gallery/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['at-cura/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['faculty_bibliography/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  ); 
+  $items['facultyprofiles/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['home_carousel/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['honours_theses/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['ors-infographics/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['scusc/scusc_2014/schedule/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['studentprofiles/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+  $items['studentwork/%'] = array(
+    'access callback' => TRUE,
+    'page callback' => 'old_url_lookup_id',
+    'type' => MENU_CALLBACK,
+  );
+
+// Do one of these for each set name
+
+
+  return $items;
+}
+
+/**
+ * Admin settings form builder.
+
+function islandora_identifier_lookup_admin_settings() {
+  $form['islandora_identifier_lookup_path_to_uuidgen'] = array(
+    '#title' => t('Path to uuidgen'),
+    '#type' => 'textfield',
+    '#size' => 60,
+    '#default_value' => variable_get('islandora_identifier_lookup_path_to_uuidgen', '/usr/bin/uuidgen'),
+    '#description' => t('Full path to uuidgen or equivalent on the Islandora server.'),
+    '#maxlength' => 255,
+  );
+  $form['islandora_identifier_lookup_pid_solr_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('UUID Solr field'),
+    '#size' => 60,
+    '#default_value' => variable_get('islandora_identifier_lookup_pid_solr_field', 'mods_identifier_uuid_s'),
+    '#description' => t('Solr fieldname to use in queries to get PID corresponding to UUID, and UUID 
+      corresponding to PID.'),
+    '#maxlength' => 255,
+  );
+  $form['islandora_identifier_lookup_add_uuids'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add identifier elements containing UUIDs to new objects'),
+    '#default_value' => variable_get('islandora_identifier_lookup_add_uuids', 1),
+    '#description' => t("Check this option if you want to add an &lt;idenfitier&gt;
+      element (type='uuid') containing a UUID to each new object's MODS datastream. 
+      Will not add one if one is already present."),
+  );
+
+  return system_settings_form($form);
+}
+*/ 
+
+
+
+
+/**
+ * Intercept the incoming URL and check whether it's in the thing
+ */
+
+function old_url_lookup_id() {
+  $path = request_path();
+  $path = "http://kora.kpu.ca/" . $path;
+  $pid = old_url_lookup_query_solr($path);
+  global $base_url;
+  $target_url = $base_url . "/islandora/object/" . $pid;
+
+  drupal_goto($target_url);
+
+}
+
+
+/**
+ * Queries Islandora's Solr index.
+ *
+ */
+
+function old_url_lookup_query_solr($input) {
+  $solr_url = 'http://localhost:8080/solr';
+  $field = "mods_identifier_uri_s";
+  $query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
+  $field . ':%22' . $input . '%22';
+  $raw_result = drupal_http_request($query);
+  if ($raw_result->code != 200) {
+    return FALSE;
+  }
+  $query_result = json_decode($raw_result->data);
+  if ($query_result->response->numFound < 1) {
+    return FALSE;
+  }
+  // The query should only find one object, but if it finds more than one,
+  // take the first one.
+  return $query_result->response->docs[0]->PID;
+}
