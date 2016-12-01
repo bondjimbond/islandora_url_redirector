@@ -7,6 +7,8 @@ An Islandora migration module that looks up an object's old "permanent" URL from
 * [Islandora](https://github.com/Islandora/islandora)
 * [Islandora Solr Search](https://github.com/Islandora/islandora_solr_search)
 
+Note: Whichever server you install the module on **must have access to the target repository's Solr instance.** This is not an issue if you're installing the module on your target repository.
+
 ## Installation
 
 Same as any Drupal module.
@@ -14,10 +16,11 @@ Same as any Drupal module.
 ## Configuration
 This module assumes your permalinks follow certain patterns - the base URL, some defined snippet, and some variable ending. 
 e.g. Original URL http://kora.kpu.ca/facultypub/26 
-Three fields:
+Four fields:
 * URL snippets: such as "facultypub" from the above example. Enter multiple snippets **delimited by semicolon (with no space)**.
 * Solr field: the Solr field that contains the old URL.
 * New hostname base URL: defaults to base URL of the site where the module lives.
+* Solr base URL: By deafult it's localhost - leave that if you're not targeting an external site. Otherwise, you need to target the other site's Solr URL.
 
 ## Wish list
 
