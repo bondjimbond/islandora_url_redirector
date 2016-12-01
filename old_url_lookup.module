@@ -86,6 +86,7 @@ function old_url_lookup_admin_settings() {
  */
 
 function old_url_lookup_id() {
+  global $base_url;
   $path = request_path();
   $path = "http://kora.kpu.ca/" . $path;
   $pid = old_url_lookup_query_solr($path);
