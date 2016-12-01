@@ -11,20 +11,15 @@
 function old_url_lookup_menu() {
 
   $items['admin/islandora/tools/urllookup'] = array(
-    'title' => 'Islandora Old URL Lookup Lookup',
-    'description' => 'Configure Islandora Identifier Lookup.',
+    'title' => 'Islandora URL Redirector',
+    'description' => 'Configure Islandora URL Redirector.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('old_url_lookup_admin_settings'),
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
   );
 
-// This is where failure is happening... why? Is it because it's being called on before $items is returned??
   $snippets = variable_get('old_url_lookup_path_snippet', '');
-
-// Can't get the variable for some reason. 
-//  $snippets = "facultypub;at-cura;home_carousel";
-
   $snippets = explode(';',$snippets);
   
   foreach ($snippets as $snippet) {
