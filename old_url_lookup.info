@@ -1,4 +1,4 @@
-name = Islandora Legacy URL Lookup
+name = Islandora URL Redirector
 description = "Redirects legacy permalinks from migrated repositories to new Islandora objects."
 package = Islandora Tools
 core = 7.x
