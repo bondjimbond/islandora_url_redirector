@@ -74,6 +74,16 @@ function old_url_lookup_admin_settings() {
     '#description' => t('Your new repository base URL'),
     '#maxlength' => 255,
   );
+
+  $form['old_url_solr_base'] = array(
+    '#type' => 'textfield',
+    '#title' => t('New hostname base URL'),
+    '#size' => 60,
+    '#default_value' => variable_get('old_url_solr_base', 'http://localhost:8080/solr'),
+    '#description' => t('Solr URL for the new repository.'),
+    '#maxlength' => 255,
+  );
+
   return system_settings_form($form);
 }
  
@@ -104,8 +114,7 @@ function old_url_lookup_id() {
  */
 
 function old_url_lookup_query_solr($input) {
-  $solr_url = 'http://localhost:8080/solr';
-//  $field = "mods_identifier_uri_s";
+  $solr_url = variable_get('old_url_solr_url','http://localhost:8080/solr');
   
   $field = "dc.identifier";
   $query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
