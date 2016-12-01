@@ -9,101 +9,74 @@
  * Implements hook_menu().
  */
 function old_url_lookup_menu() {
-  $items['facultypub/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['at-cura_gallery/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['at-cura/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['faculty_bibliography/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  ); 
-  $items['facultyprofiles/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['home_carousel/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['honours_theses/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['ors-infographics/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['scusc/scusc_2014/schedule/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['studentprofiles/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
-  );
-  $items['studentwork/%'] = array(
-    'access callback' => TRUE,
-    'page callback' => 'old_url_lookup_id',
-    'type' => MENU_CALLBACK,
+
+  $items['admin/islandora/tools/urllookup'] = array(
+    'title' => 'Islandora Old URL Lookup Lookup',
+    'description' => 'Configure Islandora Identifier Lookup.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('old_url_lookup_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
   );
 
-// Do one of these for each set name
+// This is where failure is happening... why? Is it because it's being called on before $items is returned??
+  $snippets = variable_get('old_url_lookup_path_snippet', '');
 
+// Can't get the variable for some reason. 
+//  $snippets = "facultypub;at-cura;home_carousel";
+
+  $snippets = explode(';',$snippets);
+  
+  foreach ($snippets as $snippet) {
+    $snippet = $snippet . "/%";
+    $items[$snippet] = array(
+      'access callback' => TRUE,
+      'page callback' => 'old_url_lookup_id',
+      'page arguments' => array('old_url_lookup_admin_settings'),
+      'type' => MENU_CALLBACK,
+    );
+  }
+  
 
   return $items;
 }
 
 /**
  * Admin settings form builder.
+*/
 
-function islandora_identifier_lookup_admin_settings() {
-  $form['islandora_identifier_lookup_path_to_uuidgen'] = array(
-    '#title' => t('Path to uuidgen'),
+function old_url_lookup_admin_settings() {
+  global $base_url;
+
+  $form['old_url_lookup_path_snippet'] = array(
+    '#title' => t('Old path snippet'),
     '#type' => 'textfield',
     '#size' => 60,
-    '#default_value' => variable_get('islandora_identifier_lookup_path_to_uuidgen', '/usr/bin/uuidgen'),
-    '#description' => t('Full path to uuidgen or equivalent on the Islandora server.'),
+    '#default_value' => variable_get('old_url_lookup_path_snippet'),
+    '#description' => t('URL pattern to trigger an identifier lookup. Add all non-unique patterns.'),
     '#maxlength' => 255,
-  );
-  $form['islandora_identifier_lookup_pid_solr_field'] = array(
-    '#type' => 'textfield',
-    '#title' => t('UUID Solr field'),
-    '#size' => 60,
-    '#default_value' => variable_get('islandora_identifier_lookup_pid_solr_field', 'mods_identifier_uuid_s'),
-    '#description' => t('Solr fieldname to use in queries to get PID corresponding to UUID, and UUID 
-      corresponding to PID.'),
-    '#maxlength' => 255,
-  );
-  $form['islandora_identifier_lookup_add_uuids'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Add identifier elements containing UUIDs to new objects'),
-    '#default_value' => variable_get('islandora_identifier_lookup_add_uuids', 1),
-    '#description' => t("Check this option if you want to add an &lt;idenfitier&gt;
-      element (type='uuid') containing a UUID to each new object's MODS datastream. 
-      Will not add one if one is already present."),
   );
 
+  $form['old_url_lookup_solr_field'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Old URL Solr field'),
+    '#size' => 60,
+    '#default_value' => variable_get('old_url_lookup_solr_field', 'dc.identifier'),
+    '#description' => t('Solr field containing the old permanent URL.'),
+    '#maxlength' => 255,
+  );
+  
+  $form['old_url_lookup_base'] = array(
+    '#type' => 'textfield',
+    '#title' => t('New hostname base URL'),
+    '#size' => 60,
+    '#default_value' => variable_get('old_url_lookup_base', $base_url),
+    '#description' => t('Your new repository base URL'),
+    '#maxlength' => 255,
+  );
   return system_settings_form($form);
 }
-*/ 
+ 
 
 
 
@@ -116,8 +89,8 @@ function old_url_lookup_id() {
   $path = request_path();
   $path = "http://kora.kpu.ca/" . $path;
   $pid = old_url_lookup_query_solr($path);
-  global $base_url;
-  $target_url = $base_url . "/islandora/object/" . $pid;
+  $url = variable_get('old_url_lookup_base', $base_url);
+  $target_url = $url . "/islandora/object/" . $pid;
 
   drupal_goto($target_url);
 

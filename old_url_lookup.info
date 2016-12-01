@@ -1,5 +1,5 @@
-name = Islandora Identifier Lookup
-description = "Provides an HTTP interface for looking up identifiers associated with Islandora objects."
+name = Islandora Legacy URL Lookup
+description = "Redirects legacy permalinks from migrated repositories to new Islandora objects."
 package = Islandora Tools
 core = 7.x
 dependencies[] = islandora
