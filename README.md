@@ -25,10 +25,6 @@ Four fields:
 * New hostname base URL: defaults to base URL of the site where the module lives.
 * Solr base URL: By deafult it's localhost - leave that if you're not targeting an external site. Otherwise, you need to target the other site's Solr URL.
 
-## Wish list
-
-Coming soon
-
 ## Maintainer
 
 [Brandon Weigel](https://github.com/bondjimbond)
