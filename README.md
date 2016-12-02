@@ -1,6 +1,7 @@
 # Islandora URL Redirector
 
-An Islandora migration module that looks up an object's old "permanent" URL from an identifier field and redirects the viewer to its new home in Islandora. This module can work in multiple ways:
+An Islandora migration module that preserves permalinks from objects' previous repositories. When an incoming URL matches a defined pattern, the module looks up an object's old "permanent" URL from an identifier field and redirects the viewer to its new home in Islandora. This module can work in multiple ways:
+
 * Install on the new Islandora repository, if you kept the same domain name
 * Install on the old repository if it uses a Drupal front end
 * Build a new Drupal site using this module, and point your old domain name there
