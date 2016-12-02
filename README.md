@@ -32,3 +32,4 @@ Coming soon
 ## Maintainer
 
 [Brandon Weigel](https://github.com/bondjimbond)
+Many thanks to [Mark Jordan](https://github.com/mjordan) for major contributions.
