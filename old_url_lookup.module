@@ -21,7 +21,7 @@ function old_url_lookup_menu() {
 
   $snippets = variable_get('old_url_lookup_path_snippet', '');
   $snippets = explode(';',$snippets);
-  
+
   foreach ($snippets as $snippet) {
     $snippet = $snippet . "/%";
     $items[$snippet] = array(
