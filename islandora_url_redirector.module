@@ -2,32 +2,32 @@
 
 /**
  * @file
- * The main islandora_identifier_lookup module file.
+ * The main islandora_url_redirector module file.
  */
 
 /**
  * Implements hook_menu().
  */
-function old_url_lookup_menu() {
+function islandora_url_redirector_menu() {
 
-  $items['admin/islandora/tools/urllookup'] = array(
+  $items['admin/islandora/tools/urlredirect'] = array(
     'title' => 'Islandora URL Redirector',
     'description' => 'Configure Islandora URL Redirector.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('old_url_lookup_admin_settings'),
+    'page arguments' => array('islandora_url_redirector_admin_settings'),
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
   );
 
-  $snippets = variable_get('old_url_lookup_path_snippet', '');
+  $snippets = variable_get('islandora_url_redirector_path_snippet', '');
   $snippets = explode(';',$snippets);
 
   foreach ($snippets as $snippet) {
     $snippet = $snippet . "/%";
     $items[$snippet] = array(
       'access callback' => TRUE,
-      'page callback' => 'old_url_lookup_id',
-      'page arguments' => array('old_url_lookup_admin_settings'),
+      'page callback' => 'islandora_url_redirector_id',
+      'page arguments' => array('islandora_url_redirector_admin_settings'),
       'type' => MENU_CALLBACK,
     );
   }
@@ -40,41 +40,41 @@ function old_url_lookup_menu() {
  * Admin settings form builder.
 */
 
-function old_url_lookup_admin_settings() {
+function islandora_url_redirector_admin_settings() {
   global $base_url;
 
-  $form['old_url_lookup_path_snippet'] = array(
+  $form['islandora_url_redirector_path_snippet'] = array(
     '#title' => t('Old path snippet'),
     '#type' => 'textfield',
     '#size' => 60,
-    '#default_value' => variable_get('old_url_lookup_path_snippet'),
+    '#default_value' => variable_get('islandora_url_redirector_path_snippet'),
     '#description' => t('URL pattern to trigger an identifier lookup. Add all non-unique patterns.'),
     '#maxlength' => 255,
   );
 
-  $form['old_url_lookup_solr_field'] = array(
+  $form['islandora_url_redirector_solr_field'] = array(
     '#type' => 'textfield',
     '#title' => t('Old URL Solr field'),
     '#size' => 60,
-    '#default_value' => variable_get('old_url_lookup_solr_field', 'dc.identifier'),
+    '#default_value' => variable_get('islandora_url_redirector_solr_field', 'dc.identifier'),
     '#description' => t('Solr field containing the old permanent URL.'),
     '#maxlength' => 255,
   );
   
-  $form['old_url_lookup_base'] = array(
+  $form['islandora_url_redirector_base'] = array(
     '#type' => 'textfield',
     '#title' => t('New hostname base URL'),
     '#size' => 60,
-    '#default_value' => variable_get('old_url_lookup_base', $base_url),
+    '#default_value' => variable_get('islandora_url_redirector_base', $base_url),
     '#description' => t('Your new repository base URL'),
     '#maxlength' => 255,
   );
 
-  $form['old_url_solr_base'] = array(
+  $form['islandora_url_redirector_solr_base'] = array(
     '#type' => 'textfield',
     '#title' => t('New hostname base URL'),
     '#size' => 60,
-    '#default_value' => variable_get('old_url_solr_base', 'http://localhost:8080/solr'),
+    '#default_value' => variable_get('islandora_url_redirector_solr_base', 'http://localhost:8080/solr'),
     '#description' => t('Solr URL for the new repository.'),
     '#maxlength' => 255,
   );
@@ -90,12 +90,12 @@ function old_url_lookup_admin_settings() {
  * Intercept the incoming URL and check whether it's in the thing
  */
 
-function old_url_lookup_id() {
+function islandora_url_redirector_id() {
   global $base_url;
   $path = request_path();
   $path = "http://kora.kpu.ca/" . $path;
-  $pid = old_url_lookup_query_solr($path);
-  $url = variable_get('old_url_lookup_base', $base_url);
+  $pid = islandora_url_redirector_query_solr($path);
+  $url = variable_get('islandora_url_redirector_base', $base_url);
   $target_url = $url . "/islandora/object/" . $pid;
 
   drupal_goto($target_url);
@@ -108,8 +108,8 @@ function old_url_lookup_id() {
  *
  */
 
-function old_url_lookup_query_solr($input) {
-  $solr_url = variable_get('old_url_solr_url','http://localhost:8080/solr');
+function islandora_url_redirector_query_solr($input) {
+  $solr_url = variable_get('islandora_url_redirector_solr_base','http://localhost:8080/solr');
   
   $field = "dc.identifier";
   $query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
