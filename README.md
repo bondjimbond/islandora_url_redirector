@@ -23,7 +23,7 @@ e.g. Original URL http://kora.kpu.ca/facultypub/26
 
 Four fields:
 
-* URL snippets: such as "facultypub" from the above example. Enter multiple snippets **delimited by semicolon (with no space)**.
+* URL snippets: string to look up, such as "facultypub" from the above example, or "kora.kpu.ca/facultypub". Enter multiple snippets **delimited by semicolon (with no space)**. 
 * Solr field: the Solr field that contains the old URL.
 * New hostname base URL: defaults to base URL of the site where the module lives.
 * Solr base URL: By deafult it's localhost - leave that if you're not targeting an external site. Otherwise, you need to target the other site's Solr URL.
