@@ -18,8 +18,11 @@ Same as any Drupal module.
 
 ## Configuration
 This module assumes your permalinks follow certain patterns - the base URL, some defined snippet, and some variable ending. 
+
 e.g. Original URL http://kora.kpu.ca/facultypub/26 
+
 Four fields:
+
 * URL snippets: such as "facultypub" from the above example. Enter multiple snippets **delimited by semicolon (with no space)**.
 * Solr field: the Solr field that contains the old URL.
 * New hostname base URL: defaults to base URL of the site where the module lives.
