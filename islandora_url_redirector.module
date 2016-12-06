@@ -93,7 +93,7 @@ function islandora_url_redirector_admin_settings() {
 function islandora_url_redirector_id() {
   global $base_url;
   $path = request_path();
-  $path = "http://kora.kpu.ca/" . $path;
+ // $path = "http://kora.kpu.ca/" . $path;
   $pid = islandora_url_redirector_query_solr($path);
   $url = variable_get('islandora_url_redirector_base', $base_url);
   $target_url = $url . "/islandora/object/" . $pid;
