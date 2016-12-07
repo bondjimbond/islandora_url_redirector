@@ -9,7 +9,6 @@
  * Implements hook_menu().
  */
 function islandora_url_redirector_menu() {
-
   $items['admin/islandora/tools/urlredirect'] = array(
     'title' => 'Islandora URL Redirector',
     'description' => 'Configure Islandora URL Redirector.',
@@ -19,6 +18,7 @@ function islandora_url_redirector_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
+// Splits the URL snippets from admin form into an array, semicolon delimited 
   $snippets = variable_get('islandora_url_redirector_path_snippet', '');
   $snippets = explode(';',$snippets);
 
@@ -32,7 +32,6 @@ function islandora_url_redirector_menu() {
     );
   }
   
-
   return $items;
 }
 
@@ -87,12 +86,14 @@ function islandora_url_redirector_admin_settings() {
 
 
 /**
- * Intercept the incoming URL and check whether it's in the thing
+ * Intercept the incoming URL, run Solr query, and find the PID
  */
 
 function islandora_url_redirector_id() {
   global $base_url;
   $path = request_path();
+  
+  // Calls the Solr query function, passing the incoming path to it.
   $pid = islandora_url_redirector_query_solr($path);
   $url = variable_get('islandora_url_redirector_base', $base_url);
   $target_url = $url . "/islandora/object/" . $pid;
@@ -103,7 +104,7 @@ function islandora_url_redirector_id() {
 
 
 /**
- * Queries Islandora's Solr index.
+ * Queries Islandora's Solr index using the config-defined identifier field, compares incoming path.
  *
  */
 
