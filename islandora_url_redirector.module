@@ -71,10 +71,19 @@ function islandora_url_redirector_admin_settings() {
 
   $form['islandora_url_redirector_solr_base'] = array(
     '#type' => 'textfield',
-    '#title' => t('New hostname base URL'),
+    '#title' => t('Solr base URL'),
     '#size' => 60,
     '#default_value' => variable_get('islandora_url_redirector_solr_base', 'http://localhost:8080/solr'),
     '#description' => t('Solr URL for the new repository.'),
+    '#maxlength' => 255,
+  );
+
+  $form['islandora_url_redirector_old_base'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Old host base URL'),
+    '#size' => 60,
+    '#default_value' => variable_get('islandora_url_redirector_old_base', $base_url),
+    '#description' => t('Your old repository base URL. This is appended to the Snippets defined above. Leave blank if using full URLs in Snippets.'),
     '#maxlength' => 255,
   );
 
@@ -92,8 +101,14 @@ function islandora_url_redirector_admin_settings() {
 function islandora_url_redirector_id() {
   global $base_url;
   $path = request_path();
+  $oldbase = variable_get('islandora_url_redirector_old_base', $base_url);
+
+  // Check if an old base URL is set. If not, search only the snippet. If so, add base URL to path and search entire URL.
+  if($oldbase !='') {
+    $path = $oldbase . "/" . $path;
+  }
   
-  // Calls the Solr query function, passing the incoming path to it.
+// Calls the Solr query function, passing the incoming path to it.
   $pid = islandora_url_redirector_query_solr($path);
   $url = variable_get('islandora_url_redirector_base', $base_url);
   $target_url = $url . "/islandora/object/" . $pid;
