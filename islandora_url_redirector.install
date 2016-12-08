@@ -14,6 +14,7 @@ function islandora_url_redirector_uninstall() {
     'islandora_url_redirector_solr_field',
     'islandora_url_redirector_base',
     'islandora_url_redirector_solr_base',
+    'islandora_url_redirector_old_base',
   );
   array_walk($variables, 'variable_del');
 }
