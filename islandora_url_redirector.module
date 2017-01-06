@@ -47,7 +47,7 @@ function islandora_url_redirector_admin_settings() {
     '#type' => 'textfield',
     '#size' => 60,
     '#default_value' => variable_get('islandora_url_redirector_path_snippet'),
-    '#description' => t('URL pattern to trigger an identifier lookup. Add all non-unique patterns.'),
+    '#description' => t('URL patterns to trigger an identifier lookup. Add all non-unique patterns. Separate with semicolon.'),
     '#maxlength' => 255,
   );
 
