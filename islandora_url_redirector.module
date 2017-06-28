@@ -126,7 +126,8 @@ function islandora_url_redirector_id() {
 function islandora_url_redirector_query_solr($input) {
   $solr_url = variable_get('islandora_url_redirector_solr_base','http://localhost:8080/solr');
   
-  $field = "dc.identifier";
+  $field = variable_get("islandora_url_redirector_solr_field", "dc.identifier");
+  $field = empty($field) ? "dc.identifier" : $field;
   $query = $solr_url . '/select?version=1.2&wt=json&json.nl=map&q=' .
   $field . ':%22' . $input . '%22';
   $raw_result = drupal_http_request($query);
